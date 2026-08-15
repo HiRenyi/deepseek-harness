@@ -268,3 +268,32 @@
         port: 58082
         autoStart: true
         profile: prod
+
+# ── community plugins ──────────────────────────────────────────────────────
+
+- id: tool-kit
+  name: '@deepseek-ai/dsh-toolkit'
+
+- id: dsh-deep-research
+  name: '@dsh-external/dsh-deep-research'
+
+- id: dsh-memory-evolve
+  name: 'dsh-memory-evolve'
+
+- id: message-edit
+  name: 'dsh-message-edit'
+
+- id: dsh-at-file
+  name: 'dsh-at-file'
+
+- id: dsh-auto-approval
+  name: 'dsh-auto-approval-workspace'
+
+- id: vision-toolkit
+  name: '@anionex/dsh-vision-toolkit'
+
+- id: dsh-notification
+  name: 'dsh-notification'
+
+- id: dsh-share
+  name: 'dsh-share'
