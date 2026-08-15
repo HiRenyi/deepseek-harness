@@ -1,0 +1,38 @@
+{
+  "manifest_version": 3,
+  "name": "Browser MCP",
+  "version": "1.0.17",
+  "description": "Browser control MCP extension for AI agents",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAv1jVawJ6MOjF+GadAisTfi5LMwgkRjZLlkYKytnEzD8HpWgknUYEpVYdEE/NTE9kuwFGifbQpEcZOkQq0ts9rZrtAPemkIBT1K2yeKZMOG5xAiiU6ndS4wTAacrEi+0uqctkX7UkdydahEWN63EdE2I+agtf80TTe3CJGME2biJbunKQb7zGzPAbpAkxPNxjx1OwAuLlzqpRu0Z4Y0hRzRy6Ai81DXjpES628TxQUjKDZdz3mQf/UZZkh9NgpkZvg57DpeCqdRyGE0QGkqJ2UmEUWgb+K/9inuefBgMqWWVUSEYPnMBKAnZ5YyOr5xAOMcaAOyLw6DlqdkPIPa8hRwIDAQAB",
+  "permissions": [
+    "debugger",
+    "nativeMessaging",
+    "alarms",
+    "activeTab",
+    "tabs",
+    "scripting",
+    "storage",
+    "tabGroups"
+  ],
+  "host_permissions": [
+    "http://127.0.0.1:58080/*"
+  ],
+  "background": {
+    "service_worker": "dist/background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "src/popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "minimum_chrome_version": "116"
+}

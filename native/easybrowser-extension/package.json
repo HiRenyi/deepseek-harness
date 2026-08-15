@@ -1,0 +1,16 @@
+{
+  "name": "browser-mcp-extension",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "esbuild src/background.ts --bundle --outfile=dist/background.js --format=esm --target=chrome116 --charset=utf8 && esbuild src/content/editor.ts --bundle --outfile=dist/content/editor.js --format=iife --target=chrome116 --charset=utf8 && esbuild src/content/annotation.ts --bundle --outfile=dist/content/annotation.js --format=iife --target=chrome116 --charset=utf8",
+    "dev": "esbuild src/background.ts --bundle --outfile=dist/background.js --format=esm --target=chrome116 --charset=utf8 --watch",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.268",
+    "esbuild": "^0.21.0",
+    "typescript": "^5.5.0",
+    "vitest": "^1.6.1"
+  }
+}

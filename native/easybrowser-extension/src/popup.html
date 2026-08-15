@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=380, initial-scale=1.0">
+  <title>Browser MCP</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <img src="../icons/icon48.png" alt="Browser MCP" class="header-icon">
+      <span class="header-title">Browser MCP</span>
+    </div>
+    <div class="header-right">
+      <span id="status-led" class="led led-gray"></span>
+    </div>
+  </header>
+
+  <!-- Extension version-mismatch banner -->
+  <section id="ext-stale-banner" class="section banner-stale" style="display:none">
+    <div class="banner-body">
+      <b>扩展有新版</b>
+      <div class="muted small">bridge 已到 <code id="stale-bridge-ver">—</code>，本扩展仍是 <code id="stale-ext-ver">—</code>。</div>
+      <div class="muted small">到 <code>chrome://extensions</code> 点本扩展的「重新加载」，或重启 Chrome 让新版生效。</div>
+    </div>
+  </section>
+
+  <!-- Connection Status -->
+  <section class="section connection-section">
+    <div class="status-line">
+      <span id="status-text" class="status-text">检查中…</span>
+      <span id="status-detail" class="status-detail"></span>
+    </div>
+    <div class="status-actions">
+      <button id="btn-disconnect" class="btn btn-secondary" disabled>断开</button>
+      <button id="btn-reconnect" class="btn btn-primary" disabled>重新连接</button>
+    </div>
+  </section>
+
+  <!-- Quick Tools — hidden (暂不显示，保留代码后续恢复) -->
+  <section class="section tools-section" style="display:none">
+    <h3 class="section-title">快捷工具</h3>
+    <div class="tools-row">
+      <button id="btn-editor" class="btn-tool">
+        <span class="tool-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
+        </span>
+        <span class="tool-label">编辑</span>
+      </button>
+      <button id="btn-annotation" class="btn-tool">
+        <span class="tool-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L3 13V3h10l7.59 7.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+        </span>
+        <span class="tool-label">标注</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- CDP Security Controls — hidden (暂不显示) -->
+  <section class="section" style="display:none">
+    <h3 class="section-title">安全控制</h3>
+    <div class="toggle-row">
+      <span class="toggle-label">CDP 调用</span>
+      <span class="toggle-status" id="toggle-raw-cdp-status">开</span>
+      <label class="toggle-switch">
+        <input type="checkbox" id="toggle-raw-cdp" checked>
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+    <div class="toggle-row">
+      <span class="toggle-label">执行 JS</span>
+      <span class="toggle-status" id="toggle-eval-js-status">开</span>
+      <label class="toggle-switch">
+        <input type="checkbox" id="toggle-eval-js" checked>
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+    <div class="toggle-row">
+      <span class="toggle-label">Fetch 域</span>
+      <span class="toggle-status" id="toggle-fetch-domain-status">开</span>
+      <label class="toggle-switch">
+        <input type="checkbox" id="toggle-fetch-domain" checked>
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+  </section>
+
+  <!-- Idle auto-release (was 空闲收尾/灭灯 — renamed for clarity) -->
+  <section class="section">
+    <h3 class="section-title">
+      无操作自动释放
+      <span class="tip"><span class="tip-icon">?</span><span class="tip-text">当 AI 长时间不操作页面时，等待 N 秒后自动断开调试器连接并关闭页面呼吸灯，释放对该标签的控制状态，避免长时间占用。下次有操作时会自动重新连接。建议 120–300 秒。</span></span>
+    </h3>
+    <div class="toggle-row">
+      <span class="toggle-label">等待时间(秒)</span>
+      <input type="number" id="input-idle-timeout" min="60" max="3600" step="10" title="无操作 N 秒后自动断开调试器并灭灯（最小 60）">
+      <button id="btn-save-idle" class="btn btn-secondary">保存</button>
+    </div>
+  </section>
+
+  <!-- MCP Config — always visible; tab switch (no dropdown); full code block -->
+  <section class="section" id="config-section">
+    <h3 class="section-title">
+      MCP 配置
+      <span class="tip"><span class="tip-icon">?</span><span class="tip-text">支持 HTTP 和 SSE 两种协议，可自由点击切换。HTTP（推荐）：流式请求，单连接；SSE：服务器推送事件。复制对应配置块到 MCP 客户端即可接入。</span></span>
+    </h3>
+    <div class="config-controls">
+      <div class="config-tabs" id="config-tabs">
+        <button type="button" class="config-tab active" data-fmt="http">HTTP</button>
+        <button type="button" class="config-tab" data-fmt="sse">SSE</button>
+      </div>
+      <button id="btn-copy-config" class="btn btn-copy">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>复制
+      </button>
+    </div>
+    <div class="config-preview">
+      <pre id="config-json"></pre>
+    </div>
+    <span id="copy-feedback" class="copy-feedback">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>已复制
+    </span>
+  </section>
+
+  <!-- Tab Group Status -->
+  <section class="section" id="tabgroup-section" style="display:none;">
+    <span id="tabgroup-info" class="tabgroup-info"></span>
+  </section>
+
+  <!-- Footer — guide/docs links removed; 反馈入口待生产链接就绪后接入 -->
+  <footer class="footer">
+    <div id="bridge-ver" class="footer-version">bridge —</div>
+  </footer>
+
+  <script src="profile.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

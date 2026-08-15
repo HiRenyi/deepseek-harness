@@ -1,0 +1,24 @@
+{
+  "FixedFileInfo": {
+    "FileVersion": {"Major": 1, "Minor": 0, "Patch": 0, "Build": 0},
+    "ProductVersion": {"Major": 1, "Minor": 0, "Patch": 0, "Build": 0},
+    "FileFlagsMask": "63",
+    "FileFlags": "0",
+    "FileOS": "262148",
+    "FileType": "1"
+  },
+  "StringFileInfo": {
+    "CompanyName": "东吴证券",
+    "ProductName": "浏览器自动化插件",
+    "FileDescription": "Browser MCP native messaging host",
+    "InternalName": "nm-host",
+    "OriginalFilename": "nm-host-prod.exe",
+    "ProductVersion": "1.0.0"
+  },
+  "VarFileInfo": {
+    "Translation": {"LangID": 1033, "CharsetID": 1200}
+  },
+  "GUID": "58948438-BA38-497C-97F0-8613E4AE3469",
+  "IconPath": "",
+  "IconFlags": 0
+}
