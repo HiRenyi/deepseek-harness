@@ -1,13 +1,11 @@
 ; DeepSeek Harness Windows Installer (NSIS)
-; Requires: NSIS 3.x
-
+; Full offline installer — bundles Node.js, Chromium, and all dependencies.
 Unicode True
 
 !define PRODUCT_NAME "DeepSeek Harness"
 !define PRODUCT_PUBLISHER "HiRenyi"
 !define PRODUCT_VERSION "0.1.0-rc.5"
-!define NODEJS_URL "https://nodejs.org/dist/v24.15.0/node-v24.15.0-x64.msi"
-!define CHROME_URL "https://dl.google.com/chrome/install/latest/chrome_installer.exe"
+!define NPM_REGISTRY "https://registry.npmjs.org/"
 
 !ifndef SourceDir
   !define SourceDir "dist\windows-amd64"
@@ -18,31 +16,16 @@ Unicode True
 !endif
 
 Name "${PRODUCT_NAME} ${Version}"
-OutFile "dist\DeepSeek-Harness-Setup-${Version}.exe"
+OutFile "dist\DeepSeek-Harness-Full-Setup-${Version}.exe"
 InstallDir "$PROGRAMFILES64\${PRODUCT_NAME}"
 InstallDirRegKey HKCU "Software\${PRODUCT_NAME}" ""
 RequestExecutionLevel admin
 
-; Modern UI
 !include "MUI2.nsh"
 !include "FileFunc.nsh"
-!include "nsDialogs.nsh"
-!include "WinVer.nsh"
-
-; Custom page for dependency check
-Var NodeJsFound
-Var ChromeFound
-Var Dialog
-Var NodeJsLabel
-Var ChromeLabel
-Var NodeJsInstallBtn
-Var ChromeInstallBtn
-Var SkipNodeJsBtn
-Var SkipChromeBtn
 
 ; Pages
 !insertmacro MUI_PAGE_WELCOME
-Page custom DependencyCheck DependencyCheckLeave
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_INSTFILES
 !insertmacro MUI_PAGE_FINISH
@@ -50,173 +33,87 @@ Page custom DependencyCheck DependencyCheckLeave
 !insertmacro MUI_UNPAGE_CONFIRM
 !insertmacro MUI_UNPAGE_INSTFILES
 
-; Languages
 !insertmacro MUI_LANGUAGE "English"
 !insertmacro MUI_LANGUAGE "SimpChinese"
 
-; Language strings
-LangString NodeJsNotFound ${LANG_ENGLISH} "Node.js is not installed. DeepSeek Harness requires Node.js 22+ to run."
-LangString NodeJsNotFound ${LANG_SIMPCHINESE} "未检测到 Node.js。DeepSeek Harness 需要 Node.js 22+ 才能运行。"
-LangString ChromeNotFound ${LANG_ENGLISH} "Chrome is not installed. Browser automation requires Chrome."
-LangString ChromeNotFound ${LANG_SIMPCHINESE} "未检测到 Chrome。浏览器自动化功能需要 Chrome。"
-LangString NodeJsFound_ ${LANG_ENGLISH} "Node.js detected ✓"
-LangString NodeJsFound_ ${LANG_SIMPCHINESE} "Node.js 已安装 ✓"
-LangString ChromeFound_ ${LANG_ENGLISH} "Chrome detected ✓"
-LangString ChromeFound_ ${LANG_SIMPCHINESE} "Chrome 已安装 ✓"
-
-; Check for Node.js
-Function CheckNodeJs
-  nsExec::ExecToStack '"node" --version'
-  Pop $0
-  StrCmp $0 "0" NodeJsFound_Label
-  StrCpy $NodeJsFound "no"
-  Goto NodeJsDone
-NodeJsFound_Label:
-  StrCpy $NodeJsFound "yes"
-NodeJsDone:
+; ── Helper: create dsh launcher batch ──
+Function CreateDshLauncher
+  FileOpen $0 "$INSTDIR\dsh.cmd" w
+  FileWrite $0 '@echo off$\r$\n'
+  FileWrite $0 'set "NODE_PATH=%~dp0node\node-v24.15.0-win-x64"$\r$\n'
+  FileWrite $0 'set "PATH=%NODE_PATH%;%PATH%"$\r$\n'
+  FileWrite $0 '"%NODE_PATH%\node.exe" "%~dp0dsh\lib\bin.js" %*$\r$\n'
+  FileClose $0
 FunctionEnd
 
-; Check for Chrome
-Function CheckChrome
-  ; Check common install locations
-  IfFileExists "$PROGRAMFILES64\Google\Chrome\Application\chrome.exe" ChromeFound_Label
-  IfFileExists "$PROGRAMFILES32\Google\Chrome\Application\chrome.exe" ChromeFound_Label
-  IfFileExists "$LOCALAPPDATA\Google\Chrome\Application\chrome.exe" ChromeFound_Label
-  StrCpy $ChromeFound "no"
-  Goto ChromeDone
-ChromeFound_Label:
-  StrCpy $ChromeFound "yes"
-ChromeDone:
-FunctionEnd
-
-; Download and install Node.js
-Function DownloadNodeJs
-  DetailPrint "Downloading Node.js..."
-  NSISdl::download "${NODEJS_URL}" "$TEMP\node-installer.msi"
-  Pop $0
-  StrCmp $0 "success" NodeDownloadOk
-  DetailPrint "Node.js download failed: $0"
-  MessageBox MB_ICONSTOP "Node.js download failed. Please install manually from https://nodejs.org"
-  Goto NodeDownloadEnd
-NodeDownloadOk:
-  DetailPrint "Installing Node.js..."
-  ExecWait 'msiexec /i "$TEMP\node-installer.msi" /qn ADDLOCAL=ALL'
-  DetailPrint "Node.js installation complete"
-  Delete "$TEMP\node-installer.msi"
-NodeDownloadEnd:
-FunctionEnd
-
-; Download and install Chrome
-Function DownloadChrome
-  DetailPrint "Downloading Chrome..."
-  NSISdl::download "${CHROME_URL}" "$TEMP\chrome_installer.exe"
-  Pop $0
-  StrCmp $0 "success" ChromeDownloadOk
-  DetailPrint "Chrome download failed: $0"
-  MessageBox MB_ICONSTOP "Chrome download failed. Please install manually from https://google.com/chrome"
-  Goto ChromeDownloadEnd
-ChromeDownloadOk:
-  DetailPrint "Installing Chrome..."
-  ExecWait '"$TEMP\chrome_installer.exe" /silent /install'
-  DetailPrint "Chrome installation complete"
-  Delete "$TEMP\chrome_installer.exe"
-ChromeDownloadEnd:
-FunctionEnd
-
-; Custom dependency check page
-Function DependencyCheck
-  Call CheckNodeJs
-  Call CheckChrome
-
-  !insertmacro MUI_HEADER_TEXT "Dependency Check" "Checking required software..."
-
-  nsDialogs::Create 1018
-  Pop $Dialog
-
-  ${If} $Dialog == error
-    Abort
-  ${EndIf}
-
-  ; Node.js status
-  ${NSD_CreateLabel} 0 0 100% 20 ""
-  Pop $NodeJsLabel
-  ${If} $NodeJsFound == "yes"
-    ${NSD_SetText} $NodeJsLabel "$(NodeJsFound_)"
-  ${Else}
-    ${NSD_SetText} $NodeJsLabel "$(NodeJsNotFound)"
-  ${EndIf}
-
-  ; Chrome status
-  ${NSD_CreateLabel} 0 30 100% 20 ""
-  Pop $ChromeLabel
-  ${If} $ChromeFound == "yes"
-    ${NSD_SetText} $ChromeLabel "$(ChromeFound_)"
-  ${Else}
-    ${NSD_SetText} $ChromeLabel "$(ChromeNotFound)"
-  ${EndIf}
-
-  nsDialogs::Show
-FunctionEnd
-
-Function DependencyCheckLeave
-  ${If} $NodeJsFound == "no"
-    MessageBox MB_YESNO "Node.js is not installed. Install now?$\n$\n(Required for dsh CLI to run)" IDYES InstallNodeJs IDNO SkipNodeJs
-InstallNodeJs:
-    Call DownloadNodeJs
-SkipNodeJs:
-  ${EndIf}
-
-  ${If} $ChromeFound == "no"
-    MessageBox MB_YESNO "Chrome is not installed. Install now?$\n$\n(Required for browser automation)" IDYES InstallChrome IDNO SkipChrome
-InstallChrome:
-    Call DownloadChrome
-SkipChrome:
-  ${EndIf}
-FunctionEnd
-
-; Create bridge startup batch script
-Function CreateBridgeScript
+; ── Helper: create bridge launcher ──
+Function CreateBridgeLauncher
   FileOpen $0 "$INSTDIR\start-bridge.cmd" w
   FileWrite $0 '@echo off$\r$\n'
-  FileWrite $0 'echo Starting easybrowser bridge...$\r$\n'
+  FileWrite $0 'set "CHROMIUM_PATH=%~dp0chromium\chrome-win64\chrome.exe"$\r$\n'
+  FileWrite $0 'set "BROWSER_MCP_CHROME_PATH=%CHROMIUM_PATH%"$\r$\n'
   FileWrite $0 '"%~dp0bridge.exe" --boot$\r$\n'
+  FileClose $0
+FunctionEnd
+
+; ── Helper: create PowerShell env setup ──
+Function CreateEnvSetup
+  FileOpen $0 "$INSTDIR\env.ps1" w
+  FileWrite $0 '$$nodePath = Join-Path $$PSScriptRoot "node\node-v24.15.0-win-x64"$\r$\n'
+  FileWrite $0 '$$chromiumPath = Join-Path $$PSScriptRoot "chromium\chrome-win64\chrome.exe"$\r$\n'
+  FileWrite $0 '$$env:Path = "$$nodePath;$$env:Path"$\r$\n'
+  FileWrite $0 '$$env:BROWSER_MCP_CHROME_PATH = $$chromiumPath$\r$\n'
+  FileWrite $0 'Write-Host "DeepSeek Harness environment ready"$\r$\n'
   FileClose $0
 FunctionEnd
 
 Section "Install"
   SetOutPath "$INSTDIR"
 
-  ; Core dsh
+  ; ── Bundled Node.js (portable) ──
+  File /r "${SourceDir}\node\node-v24.15.0-win-x64"
+
+  ; ── Bundled Chromium (Playwright) ──
+  File /r "${SourceDir}\chromium\chrome-win64"
+
+  ; ── Core dsh CLI ──
   File /r "${SourceDir}\dsh\*"
 
-  ; Desktop app
+  ; ── Desktop app ──
   File "${SourceDir}\DeepSeek Harness.exe"
 
-  ; easybrowser bridge
-  File /nonfatal "${SourceDir}\bridge.exe"
-  File /nonfatal "${SourceDir}\nm-host.exe"
+  ; ── easybrowser native binaries ──
+  File "${SourceDir}\bridge.exe"
+  File "${SourceDir}\nm-host.exe"
 
-  ; Chrome extension
-  File /nonfatal /r "${SourceDir}\extension"
+  ; ── Chrome extension ──
+  File /r "${SourceDir}\extension"
 
-  ; Create startup scripts
-  Call CreateBridgeScript
+  ; ── Launcher scripts ──
+  Call CreateDshLauncher
+  Call CreateBridgeLauncher
+  Call CreateEnvSetup
 
-  ; Register auto-start for bridge
-  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "${PRODUCT_NAME}Bridge" "$INSTDIR\bridge.exe --boot"
+  ; ── Register bridge auto-start ──
+  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Run" \
+    "${PRODUCT_NAME}Bridge" '"$INSTDIR\bridge.exe" --boot'
 
-  ; Write uninstaller
+  ; ── Uninstaller ──
   WriteUninstaller "$INSTDIR\Uninstall.exe"
 
-  ; Start menu shortcut
+  ; ── Shortcuts ──
   CreateDirectory "$SMPROGRAMS\${PRODUCT_NAME}"
-  CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\${PRODUCT_NAME}.lnk" "$INSTDIR\DeepSeek Harness.exe"
-  CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Uninstall.lnk" "$INSTDIR\Uninstall.exe"
+  CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\${PRODUCT_NAME}.lnk" \
+    "$INSTDIR\DeepSeek Harness.exe"
+  CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\dsh CLI.lnk" \
+    "$INSTDIR\node\node-v24.15.0-win-x64\node.exe" \
+    '"$INSTDIR\dsh\lib\bin.js" --profile web'
+  CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Uninstall.lnk" \
+    "$INSTDIR\Uninstall.exe"
+  CreateShortCut "$DESKTOP\${PRODUCT_NAME}.lnk" \
+    "$INSTDIR\DeepSeek Harness.exe"
 
-  ; Desktop shortcut
-  CreateShortCut "$DESKTOP\${PRODUCT_NAME}.lnk" "$INSTDIR\DeepSeek Harness.exe"
-
-  ; Registry for uninstall
+  ; ── Registry ──
   WriteRegStr HKCU "Software\${PRODUCT_NAME}" "" "$INSTDIR"
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}" \
     "DisplayName" "${PRODUCT_NAME}"
@@ -227,25 +124,23 @@ Section "Install"
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}" \
     "Publisher" "${PRODUCT_PUBLISHER}"
 
-  ; Start bridge after install
+  ; ── Start bridge ──
   Exec "$\"$INSTDIR\bridge.exe$\" --boot"
+
+  ; ── Install npm dependencies ──
+  DetailPrint "Installing npm dependencies..."
+  nsExec::ExecToStack '"$INSTDIR\node\node-v24.15.0-win-x64\node.exe" "$INSTDIR\node\node-v24.15.0-win-x64\node_modules\npm\bin\npm-cli.js" install --prefix "$INSTDIR\dsh" --production --registry "${NPM_REGISTRY}"'
+  Pop $0
+  DetailPrint "npm install completed (exit code: $0)"
 SectionEnd
 
 Section "Uninstall"
-  ; Stop bridge if running
   ExecWait '"$INSTDIR\bridge.exe" --shutdown'
-
-  ; Remove auto-start
-  DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "${PRODUCT_NAME}Bridge"
-
-  ; Remove files
+  DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Run" \
+    "${PRODUCT_NAME}Bridge"
   RMDir /r "$INSTDIR"
-
-  ; Remove shortcuts
   RMDir /r "$SMPROGRAMS\${PRODUCT_NAME}"
   Delete "$DESKTOP\${PRODUCT_NAME}.lnk"
-
-  ; Remove registry
   DeleteRegKey HKCU "Software\${PRODUCT_NAME}"
   DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 SectionEnd

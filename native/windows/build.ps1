@@ -54,7 +54,27 @@ try {
     $dshDir = Join-Path $BuildDir 'dsh'
     New-Item -ItemType Directory -Force -Path $dshDir | Out-Null
     Copy-Item -Recurse -Force (Join-Path $RepoRoot 'apps\cli\lib') $dshDir
-    Copy-Item -Force (Join-Path $RepoRoot 'apps\cli\package.json') $dshDir
+    # Generate deployment package.json (replaces workspace:^ with ^0.1.0-rc.5)
+    $pkg = Get-Content (Join-Path $RepoRoot 'apps\cli\package.json') -Raw | ConvertFrom-Json
+    $deployPkg = @{
+        name = "deepseek-harness"
+        version = "0.1.0-rc.5"
+        private = $true
+        type = "module"
+        bin = @{ dsh = "lib/bin.js" }
+        dependencies = @{}
+    }
+    foreach ($dep in $pkg.dependencies.PSObject.Properties) {
+        $v = $dep.Value
+        if ($v -eq 'workspace:^') { $v = '^0.1.0-rc.5' }
+        elseif ($v -like 'workspace:*') { $v = $v -replace 'workspace:', '' }
+        # Skip git dependencies
+        if ($v -like 'https://github.com/*') { continue }
+        # Skip our custom workspace packages (not published)
+        if ($dep.Name -in @('@deepseek-ai/dsh-easybrowser', '@deepseek-ai/dsh-windows-launcher')) { continue }
+        $deployPkg.dependencies[$dep.Name] = $v
+    }
+    $deployPkg | ConvertTo-Json -Depth 10 | Set-Content (Join-Path $dshDir 'package.json') -Encoding UTF8
 }
 finally {
     Pop-Location
@@ -66,8 +86,8 @@ $bridgeDir = Join-Path $RepoRoot 'native\easybrowser'
 if (Test-Path $bridgeDir) {
     Push-Location $bridgeDir
     try {
-        go build -o (Join-Path $BuildDir 'bridge.exe') .
-        Write-Host "  bridge.exe built" -ForegroundColor Green
+        go build -ldflags="-H=windowsgui" -o (Join-Path $BuildDir 'bridge.exe') .
+        Write-Host "  bridge.exe built (GUI subsystem)" -ForegroundColor Green
     }
     finally {
         Pop-Location

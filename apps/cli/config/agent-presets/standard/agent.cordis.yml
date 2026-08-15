@@ -270,30 +270,15 @@
         profile: prod
 
 # ── community plugins ──────────────────────────────────────────────────────
-
-- id: tool-kit
-  name: '@deepseek-ai/dsh-toolkit'
-
-- id: dsh-deep-research
-  name: '@dsh-external/dsh-deep-research'
-
-- id: dsh-memory-evolve
-  name: 'dsh-memory-evolve'
+# Note: git-hosted plugins (dsh-toolkit, dsh-deep-research, dsh-memory-evolve,
+# dsh-at-file, dsh-auto-approval, dsh-notification) are not included in the
+# offline installer. Install them via: dsh plugin --profile web add <package>
 
 - id: message-edit
   name: 'dsh-message-edit'
 
-- id: dsh-at-file
-  name: 'dsh-at-file'
-
-- id: dsh-auto-approval
-  name: 'dsh-auto-approval-workspace'
-
 - id: vision-toolkit
   name: '@anionex/dsh-vision-toolkit'
-
-- id: dsh-notification
-  name: 'dsh-notification'
 
 - id: dsh-share
   name: 'dsh-share'
