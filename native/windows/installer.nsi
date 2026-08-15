@@ -40,9 +40,9 @@ RequestExecutionLevel admin
 Function CreateDshLauncher
   FileOpen $0 "$INSTDIR\dsh.cmd" w
   FileWrite $0 '@echo off$\r$\n'
-  FileWrite $0 'set "NODE_PATH=%~dp0node\node-v24.15.0-win-x64"$\r$\n'
+  FileWrite $0 'set "NODE_PATH=%~dp0node-v24.15.0-win-x64"$\r$\n'
   FileWrite $0 'set "PATH=%NODE_PATH%;%PATH%"$\r$\n'
-  FileWrite $0 '"%NODE_PATH%\node.exe" "%~dp0dsh\lib\bin.js" %*$\r$\n'
+  FileWrite $0 '"%NODE_PATH%\node.exe" "%~dp0lib\bin.js" %*$\r$\n'
   FileClose $0
 FunctionEnd
 
@@ -50,7 +50,7 @@ FunctionEnd
 Function CreateBridgeLauncher
   FileOpen $0 "$INSTDIR\start-bridge.cmd" w
   FileWrite $0 '@echo off$\r$\n'
-  FileWrite $0 'set "CHROMIUM_PATH=%~dp0chromium\chrome-win64\chrome.exe"$\r$\n'
+  FileWrite $0 'set "CHROMIUM_PATH=%~dp0chrome-win64\chrome.exe"$\r$\n'
   FileWrite $0 'set "BROWSER_MCP_CHROME_PATH=%CHROMIUM_PATH%"$\r$\n'
   FileWrite $0 '"%~dp0bridge.exe" --boot$\r$\n'
   FileClose $0
@@ -59,8 +59,8 @@ FunctionEnd
 ; ── Helper: create PowerShell env setup ──
 Function CreateEnvSetup
   FileOpen $0 "$INSTDIR\env.ps1" w
-  FileWrite $0 '$$nodePath = Join-Path $$PSScriptRoot "node\node-v24.15.0-win-x64"$\r$\n'
-  FileWrite $0 '$$chromiumPath = Join-Path $$PSScriptRoot "chromium\chrome-win64\chrome.exe"$\r$\n'
+  FileWrite $0 '$$nodePath = Join-Path $$PSScriptRoot "node-v24.15.0-win-x64"$\r$\n'
+  FileWrite $0 '$$chromiumPath = Join-Path $$PSScriptRoot "chrome-win64\chrome.exe"$\r$\n'
   FileWrite $0 '$$env:Path = "$$nodePath;$$env:Path"$\r$\n'
   FileWrite $0 '$$env:BROWSER_MCP_CHROME_PATH = $$chromiumPath$\r$\n'
   FileWrite $0 'Write-Host "DeepSeek Harness environment ready"$\r$\n'
@@ -106,8 +106,8 @@ Section "Install"
   CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\${PRODUCT_NAME}.lnk" \
     "$INSTDIR\DeepSeek Harness.exe"
   CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\dsh CLI.lnk" \
-    "$INSTDIR\node\node-v24.15.0-win-x64\node.exe" \
-    '"$INSTDIR\dsh\lib\bin.js" --profile web'
+    "$INSTDIR\node-v24.15.0-win-x64\node.exe" \
+    '"$INSTDIR\lib\bin.js" --profile web'
   CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Uninstall.lnk" \
     "$INSTDIR\Uninstall.exe"
   CreateShortCut "$DESKTOP\${PRODUCT_NAME}.lnk" \
@@ -129,7 +129,7 @@ Section "Install"
 
   ; ── Install npm dependencies ──
   DetailPrint "Installing npm dependencies..."
-  nsExec::ExecToStack '"$INSTDIR\node\node-v24.15.0-win-x64\node.exe" "$INSTDIR\node\node-v24.15.0-win-x64\node_modules\npm\bin\npm-cli.js" install --prefix "$INSTDIR\dsh" --production --registry "${NPM_REGISTRY}"'
+  nsExec::ExecToStack '"$INSTDIR\node-v24.15.0-win-x64\node.exe" "$INSTDIR\node-v24.15.0-win-x64\node_modules\npm\bin\npm-cli.js" install --prefix "$INSTDIR" --production --registry "${NPM_REGISTRY}"'
   Pop $0
   DetailPrint "npm install completed (exit code: $0)"
 SectionEnd
