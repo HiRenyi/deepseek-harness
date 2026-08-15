@@ -53,6 +53,13 @@ allowBuilds:
   # The Python runtime deploy includes the reviewed workspace postinstall that
   # restores the executable bit on node-pty's macOS spawn helper.
   '@deepseek-ai/dsh-subprocess-local@file:packages/subprocess/subprocess-local': true
+  # Community plugins bundled as git dependencies
+  '@deepseek-ai/dsh-toolkit': true
+  '@dsh-external/dsh-deep-research': true
+  'dsh-memory-evolve': true
+  'dsh-at-file': true
+  'dsh-auto-approval-workspace': true
+  'dsh-notification': true
 
 minimumReleaseAgeExclude:
   # Fresh pi-ai releases carry the model catalog updates that are the whole
