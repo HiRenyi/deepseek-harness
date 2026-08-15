@@ -1,3 +1,0 @@
-[submodule "vendor/easybrowser"]
-	path = vendor/easybrowser
-	url = git@github.com:HiRenyi/easybrowser.git
