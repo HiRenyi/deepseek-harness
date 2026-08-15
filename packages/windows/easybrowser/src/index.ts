@@ -1,6 +1,6 @@
 /**
  * @deepseek-ai/dsh-easybrowser — Cordis plugin wrapping easybrowser as a
- * managed sidecar service with 50 model-facing browser automation tools.
+ * managed sidecar service with 52 model-facing browser automation tools.
  *
  * Provides:
  * - easybrowser bridge lifecycle management (start/stop/restart)
@@ -49,6 +49,7 @@ interface ToolDef {
 
 const BROWSER_TOOLS: ToolDef[] = [
   // ── 感知层 (read-only) ──
+  { name: 'browser_snapshot', description: 'Capture a filtered DOM snapshot of the current browser tab', schema: { full: z.boolean().optional(), force: z.boolean().optional() } },
   { name: 'browser_snapshot_visible', description: 'Get a visible DOM snapshot of the current page', schema: {} },
   { name: 'browser_snapshot_ax', description: 'Get an accessibility tree snapshot of the current page', schema: {} },
   { name: 'browser_screenshot', description: 'Take a screenshot of the current page', schema: {} },
@@ -120,7 +121,7 @@ const BROWSER_TOOLS: ToolDef[] = [
 
 /**
  * Wraps easybrowser as a Cordis service, providing lifecycle management,
- * MCP client integration, and 50 model-facing browser tools.
+ * MCP client integration, and 52 model-facing browser tools.
  */
 export class EasyBrowserService extends Service {
   static Config: z<Config> = z.object({
@@ -168,7 +169,7 @@ export class EasyBrowserService extends Service {
   }
 
   /**
-   * Register all 50 browser automation tools in the agent's tool registry.
+   * Register all 52 browser automation tools in the agent's tool registry.
    */
   private registerTools(ctx: Context): void {
     const tools = ctx.get('tools')
