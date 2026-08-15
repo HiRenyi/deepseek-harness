@@ -1,0 +1,13 @@
+{
+  "name": "dsh-desktop-frontend",
+  "version": "0.1.0-rc.5",
+  "private": true,
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite",
+    "watch": "vite build --watch"
+  },
+  "dependencies": {
+    "vite": "^6.0.0"
+  }
+}

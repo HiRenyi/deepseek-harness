@@ -1,0 +1,19 @@
+{
+  "$schema": "https://wails.io/schemas/config.v2.json",
+  "name": "dsh-desktop",
+  "outputfilename": "DeepSeek Harness Setup",
+  "frontend:install": "npm install",
+  "frontend:build": "npm run build",
+  "frontend:dev:watcher": "npm run dev",
+  "frontend:dev:serverUrl": "auto",
+  "author": {
+    "name": "HiRenyi",
+    "email": "hirenyi@users.noreply.github.com"
+  },
+  "info": {
+    "productName": "DeepSeek Harness",
+    "productVersion": "0.1.0-rc.5",
+    "copyright": "Copyright © 2026 HiRenyi",
+    "comments": "DeepSeek Harness Windows Desktop Shell"
+  }
+}
