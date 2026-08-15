@@ -42,7 +42,7 @@ Function CreateDshLauncher
   FileWrite $0 '@echo off$\r$\n'
   FileWrite $0 'set "NODE_PATH=%~dp0node-v24.15.0-win-x64"$\r$\n'
   FileWrite $0 'set "PATH=%NODE_PATH%;%PATH%"$\r$\n'
-  FileWrite $0 '"%NODE_PATH%\node.exe" "%~dp0lib\bin.js" %*$\r$\n'
+  FileWrite $0 '"%NODE_PATH%\node.exe" "%~dp0node_modules\@deepseek-ai\dsh\lib\bin.js" %*$\r$\n'
   FileClose $0
 FunctionEnd
 
@@ -71,13 +71,10 @@ Section "Install"
   SetOutPath "$INSTDIR"
 
   ; ── Bundled Node.js (portable) ──
-  File /r "${SourceDir}\node\node-v24.15.0-win-x64"
+  File /r "${SourceDir}\node-v24.15.0-win-x64"
 
   ; ── Bundled Chromium (Playwright) ──
-  File /r "${SourceDir}\chromium\chrome-win64"
-
-  ; ── Core dsh CLI ──
-  File /r "${SourceDir}\dsh\*"
+  File /r "${SourceDir}\chrome-win64"
 
   ; ── Desktop app ──
   File "${SourceDir}\DeepSeek Harness.exe"
@@ -107,7 +104,7 @@ Section "Install"
     "$INSTDIR\DeepSeek Harness.exe"
   CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\dsh CLI.lnk" \
     "$INSTDIR\node-v24.15.0-win-x64\node.exe" \
-    '"$INSTDIR\lib\bin.js" --profile web'
+    '"$INSTDIR\node_modules\@deepseek-ai\dsh\lib\bin.js" --profile web'
   CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Uninstall.lnk" \
     "$INSTDIR\Uninstall.exe"
   CreateShortCut "$DESKTOP\${PRODUCT_NAME}.lnk" \
@@ -127,9 +124,9 @@ Section "Install"
   ; ── Start bridge ──
   Exec "$\"$INSTDIR\bridge.exe$\" --boot"
 
-  ; ── Install npm dependencies ──
-  DetailPrint "Installing npm dependencies..."
-  nsExec::ExecToStack '"$INSTDIR\node-v24.15.0-win-x64\node.exe" "$INSTDIR\node-v24.15.0-win-x64\node_modules\npm\bin\npm-cli.js" install --prefix "$INSTDIR" --production --registry "${NPM_REGISTRY}"'
+  ; ── Install dsh CLI from npm ──
+  DetailPrint "Installing dsh CLI from npm..."
+  nsExec::ExecToStack '"$INSTDIR\node-v24.15.0-win-x64\node.exe" "$INSTDIR\node-v24.15.0-win-x64\node_modules\npm\bin\npm-cli.js" install @deepseek-ai/dsh --prefix "$INSTDIR" --registry "${NPM_REGISTRY}"'
   Pop $0
   DetailPrint "npm install completed (exit code: $0)"
 SectionEnd

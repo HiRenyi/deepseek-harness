@@ -47,13 +47,13 @@ func (a *App) startDsh() {
 
 	// Bundled Node.js (installer puts files at root level, not in subdirs)
 	nodePath := filepath.Join(appDir, "node-v24.15.0-win-x64", "node.exe")
-	dshLib := filepath.Join(appDir, "lib", "bin.js")
+	dshLib := filepath.Join(appDir, "node_modules", "@deepseek-ai", "dsh", "lib", "bin.js")
 
 	// Check if bundled Node.js exists
 	if _, err := os.Stat(nodePath); os.IsNotExist(err) {
 		// Fallback to system Node.js
 		nodePath = "node"
-		dshLib = filepath.Join(appDir, "lib", "bin.js")
+		dshLib = filepath.Join(appDir, "node_modules", "@deepseek-ai", "dsh", "lib", "bin.js")
 	}
 
 	a.dshCmd = exec.Command(nodePath, dshLib, "--profile", "web", "--port", "3080")
